@@ -49,10 +49,10 @@ ERR_MISSION_FAILED=209
 # check adb can find a device
 function checkAdbConnect()
 {
-	echo ">>> Check connecting state"
+	echo ">>> 检查连接状态"
 	adb shell ls /system > /dev/null 2>&1
 	if [ $? != "0" ];then
-		echo ">>> Device is not found, Please connect device and pc with USB cable, and open Adb Debug in device."
+		echo ">>> 设备未找到，请通过USB线缆连接设备和pc，并在设备上开启Adb调试。"
 		exit $ERR_USB_NOT_CONNECTED
 	fi
 }
@@ -61,32 +61,32 @@ function checkAdbConnect()
 # wait for the device to be online or timeout
 function waitForDeviceOnline ()
 {
-	echo ">>> Wait for the device to be online..."
+	echo ">>> 等待设备在线......"
 
 	local timeout=30
 	while [ $timeout -gt 0 ]
 	do
 		if adb shell ls /system > /dev/null 2>&1; then
-			echo ">>> device is online"
+			echo ">>> 设备在线"
 			break
 		fi
-		echo ">>> Device is not online, wait .."
+		echo ">>> 设备未在线，等待......"
 		sleep 3
 		timeout=$[$timeout - 3]
 	done
 	if [ $timeout -eq 0 ];then
-		echo ">>> Device not found, Please ensure adb can find your device and then rerun this script."
+		echo ">>> 设备未找到，请确认adb可以找到您的设备然后重新运行该脚本。"
 		exit $ERR_USB_NOT_CONNECTED
 	fi
 }
 
 function checkAdbRoot()
 {
-	echo ">>> Check adb root state"
+	echo ">>> 检查adb root状态"
 	SECURE_PROP=$(adb shell getprop ro.secure)
 	DEBUG_PROP=$(adb shell getprop ro.debuggable)
 	if [ x"$SECURE_PROP" = x"0" -o x"$DEBUG_PROP" = x"1" ];then
-		echo ">>> Kernel root ready, run adb root"
+		echo ">>> 内核root准备，运行adb root"
 		adb root
 		waitForDeviceOnline
 		return 0
@@ -100,7 +100,7 @@ function checkSuRoot()
 	waitForDeviceOnline
 	adb push exit_command /data/local/tmp/
 	rm -f exit_command
-	if echo "su < /data/local/tmp/exit_command; exit" | adb shell | grep "not found" > /dev/null 2>&1;then
+	if echo "su < /data/local/tmp/exit_command;退出" | adb shell | grep "未找到" > /dev/null 2>&1;then
 		return 1
 	fi
 	return 0
@@ -112,15 +112,15 @@ function checkRootState()
 	checkAdbConnect
 	checkAdbRoot
 	if [ $? == "0" ];then
-		echo ">>> Root State: Kernal Root"
+		echo ">>> Root状态：内核Root"
 		return 0
 	fi
 	checkSuRoot
 	if [ $? == "0" ];then
-		echo ">>> Root State: System Root"
+		echo ">>> Root状态：系统Root"
 		return 0
 	fi
-	echo ">>> Device is not a root phone."
+	echo ">>> 设备不是一台root的手机。"
 	exit $ERR_DEVICE_NOT_ROOTED
 }
 
@@ -129,33 +129,33 @@ function checkRootState()
 function checkEnvironment()
 {
 	if [ -f $NEW_MAKEFILE ];then
-		echo ">>> $NEW_MAKEFILE already exist!"
+		echo ">>> $NEW_MAKEFILE已存在！"
 		exit $ERR_MAKEFILE_EXIST
 	fi
 
 	if [ ! -f $TEMPLATE_MAKEFILE ];then
-		echo ">>> $TEMPLATE_MAKEFILE doesn't exist! "
-		echo ">>> Make sure you do source ./build/envsetup first!"
+		echo ">>> $TEMPLATE_MAKEFILE不存在！"
+		echo ">>> 确认您已于先前执行了source ./build/envsetup！"
 		exit $ERR_MISSION_FAILED
 	fi
 
 	adb shell ls / > /dev/null 2>&1
 	if [ $? != 0 -a -f $OTA_PACKAGE ];then
-		echo ">>> Device is not online, but ota.zip is exist."
-		echo ">>> Config Makefile from $OTA_PACKAGE."
+		echo ">>> 设备未在线，但ota.zip已存在。"
+		echo ">>> 从$OTA_PACKAGE配置Makefile。"
 		FROM_OTA=1
 	fi
 }
 
 function checkOTAPackage()
 {
-	echo ">>> Unzip $OTA_PACKAGE ..."
+	echo ">>> 解包$OTA_PACKAGE ......"
 	mkdir -p $OUT
 	rm -rf $OUT_OTA_DIR
 	unzip -q $OTA_PACKAGE -d $OUT_OTA_DIR
 	if [ ! -e $OUT_SYSTEM -o ! -e $OUT_METAINF ];then
-		echo ">>> Can not find $OUT_SYSTEM or $OUT_METAINF."
-		echo ">>> Check whether $OTA_PACKAGE is a ota package."
+		echo ">>> 无法找到$OUT_SYSTEM或$OUT_METAINF."
+		echo ">>> 检查$OTA_PACKAGE是否为一个ota包。"
 		exit $ERR_OTA_INCOMPATIBLE
 	fi
 	if [ -f $OUT_OTA_DIR/boot.img ];then
@@ -181,13 +181,13 @@ function checkMtkPlatform()
 			MTK_PLATFORM=false
 		fi
 	fi
-	echo ">>> Check MTK Platform: $MTK_PLATFORM"
+	echo ">>> 检查MTK平台：$MTK_PLATFORM"
 }
 
 function getResolution()
 {
 	if [ $FROM_OTA != 0 ];then
-		echo ">>> Set Resolution as default"
+		echo ">>> 设置分辨率为默认"
 		RESOLUTION="720x1280"
 		return 0
 	fi
@@ -198,7 +198,7 @@ function getResolution()
 function getDensity()
 {
 	if [ $FROM_OTA != 0 ];then
-		echo ">>> Set Density as default"
+		echo ">>> 设置像素密度为默认"
 		DENSITY="xhdpi"
 		return 0
 	fi
@@ -245,7 +245,7 @@ function getConfigValueFromMakefile()
 	local base
 
 	if [ ! -f $makefile ];then
-		echo ">>> $makefile doesn't exist!!";
+		echo ">>> $makefile不存在！！";
 		return 1
 	fi
 
@@ -254,18 +254,18 @@ function getConfigValueFromMakefile()
 	# if you config more than one BOARD_BASE_DEVICE_PROP_NAME in project's makefile, exit with error
 	result_line_count=`grep "^[ ]*$prop" $makefile -w | wc | awk '{print $1}'`
 	if [ $result_line_count = "0" ];then
-		echo ">>> $makefile's $prop does't config!!";
+		echo ">>> $makefile's $prop未配置！！";
 		return 1
 	elif [ $result_line_count != "1" ];then
-		echo ">>> $makefile's $prop define is wrong!!";
+		echo ">>> $makefile的$prop定义错误！！";
 		exit $ERR_MISSION_FAILED;
 	else # $result_line_count == "1"
 		base=`grep "^[ ]*$prop" $makefile -w \
 			| awk -F= '{print $NF}' | sed 's/^ *//g;s/$ *//g'`
 
 		if [ $? != "0" ] || [ "x$base" = "x" ];then
-			echo ">>> Can't get base from $makefile"
-			echo ">>> Make sure \"$prop\" in $makefile is right"
+			echo ">>> 无法从$makefile得到base"
+			echo ">>> 确认\"$prop\"在$makefile是正确的"
 			return 1;
 		fi
 
@@ -317,7 +317,7 @@ function getSystemType()
 {
 	if [ $FROM_OTA == 0 ];then
 		if [ x"$(adb shell getprop ro.build.ab_update)" = x"true" ]; then
-			echo ">>> Is A/B System Device"
+			echo ">>> 是A/B系统设备"
 			is_ab_update="true"
 		fi
 	fi
@@ -325,7 +325,7 @@ function getSystemType()
 
 function setupMakefile()
 {
-	echo ">>> Setup the Makefile Begin!"
+	echo ">>> 设置Makefile开始！"
 
 	cp $TEMPLATE_MAKEFILE $NEW_MAKEFILE
 
@@ -334,45 +334,45 @@ function setupMakefile()
 		echo ">>> Set vendor_modify_jars: $vendor_modify_jars"
 		sed -i "s/^[ \t]*vendor_modify_jars[ \t]*\:.*/vendor_modify_jars \:\= $vendor_modify_jars/g" $NEW_MAKEFILE
 	else
-		echo ">>> Get the files list in /system/framework failed! "
-		echo ">>> Please check the adb is ok! "
+		echo ">>> 得到在/system/framework的文件列表失败！"
+		echo ">>> 请检查adb正确！"
 		exit $ERR_MISSION_FAILED
 	fi
 
 	getDensity
 	if [ "x$DENSITY" != "x" ]; then
-		echo ">>> Set DENSITY: $DENSITY"
+		echo ">>> 设置像素密度：$DENSITY"
 		sed -i "s/^[ \t]*DENSITY[ \t]*\:.*/DENSITY \:\= $DENSITY/g" $NEW_MAKEFILE
 	fi
 
 	getResolution
 	if [ "x$RESOLUTION" != "x" ];then
-		echo ">>> Set RESOLUTION: $RESOLUTION"
+		echo ">>> 设置分辨率：$RESOLUTION"
 		sed -i "s/^[ \t]*RESOLUTION[ \t]*\:.*/RESOLUTION \:\= $RESOLUTION/g" $NEW_MAKEFILE
 	fi
 
 	getvendorSavedApps
 	if [ "x$vendor_saved_apps" != "x" ]; then
-		echo ">>> Set vendor_saved_apps: $vendor_saved_apps"
+		echo ">>> 设置vendor_saved_apps：$vendor_saved_apps"
 		sed -i "s/^[ \t]*vendor_saved_apps[ \t]*\:.*/vendor_saved_apps \:\= $vendor_saved_apps/g" $NEW_MAKEFILE
 	fi
 
 	getSystemType
 	if [ "x$is_ab_update" != "x" ]; then
-		echo ">>> Set PRODUCE_IS_AB_UPDATE: $is_ab_update"
+		echo ">>> 设置PRODUCE_IS_AB_UPDATE：$is_ab_update"
 		sed -i "s/^[ \t]*#PRODUCE_IS_AB_UPDATE[ \t]*\:.*/PRODUCE_IS_AB_UPDATE \:\= $is_ab_update/g" $NEW_MAKEFILE
 	fi
 
 	echo "===================================================="
-	echo "Makefile Configuration:"
+	echo "Makefile配置："
 	echo "    vendor_modify_jars   := $vendor_modify_jars"
 	echo "    vendor_saved_apps    := $vendor_saved_apps"
-	echo "    DENSITY              := $DENSITY"
-	echo "    RESOLUTION           := $RESOLUTION"
+	echo "    像素密度               := $DENSITY"
+	echo "    分辨率                := $RESOLUTION"
 	echo "    PRODUCE_IS_AB_UPDATE := $is_ab_update"
 	echo "===================================================="
 
-	echo ">>> Setup the Makefile Done!"
+	echo ">>> 设置Makefile完成！"
 }
 
 ############ init gitignore ###########
